@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EITRET Salad Mix - Interactive Case Study</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #303030;
+            background-color: #f9f9f9;
+            padding: 15px 10px;
+        }
+
+        .container {
+            max-width: 100%;
+            margin: 0;
+            width: 100%;
+        }
+
+        /* Interactive Game Section */
+        .game-section {
+            background: white;
+            border-radius: 12px;
+            padding: 25px 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .game-title {
+            color: #004393;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 1.6em;
+            font-weight: 600;
+        }
+
+        .question-container {
+            margin-bottom: 40px;
+            padding: 28px 60px 28px 40px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 4px solid #69b244;
+        }
+
+        .question-title {
+            color: #004393;
+            font-size: 1.2em;
+            font-weight: 600;
+            margin-bottom: 15px;
+            text-align: left;
+        }
+
+        .question-text {
+            color: #303030;
+            margin-bottom: 20px;
+            font-weight: 400;
+        }
+
+        .cards-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 35px;
+            margin-top: 20px;
+        }
+
+        .flashcard {
+            perspective: 1000px;
+            height: 250px;
+            cursor: pointer;
+            min-width: 0;
+        }
+
+        .card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+        }
+
+        .flashcard.flipped .card-inner {
+            transform: rotateY(180deg);
+        }
+
+        .card-front, .card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            font-weight: 600;
+            font-size: 1.1em;
+        }
+
+        .card-front {
+            background: #f8f9fa;
+            color: #004393;
+            border: 2px solid #004393;
+        }
+
+        .card-back {
+            background: #f8f9fa;
+            color: #303030;
+            transform: rotateY(180deg);
+            font-size: 0.95em;
+            line-height: 1.5;
+            text-align: left;
+            font-weight: 400;
+            flex-direction: column;
+            align-items: flex-start;
+            justify-content: flex-start;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            font-weight: 600;
+            font-size: 1em;
+        }
+
+        .status-icon {
+            margin-right: 8px;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            position: relative;
+        }
+
+        .status-icon::before {
+            content: '';
+            position: absolute;
+        }
+
+        .status-icon.correct::before {
+            width: 4px;
+            height: 8px;
+            border: 2.5px solid white;
+            border-top: none;
+            border-left: none;
+            transform: rotate(45deg) translate(-1.5px, -1px);
+            border-radius: 0 2px 2px 0;
+        }
+
+        .status-icon.incorrect::before {
+            width: 10px;
+            height: 2px;
+            background: white;
+            border-radius: 1px;
+            transform: rotate(45deg);
+        }
+
+        .status-icon.incorrect::after {
+            content: '';
+            position: absolute;
+            width: 10px;
+            height: 2px;
+            background: white;
+            border-radius: 1px;
+            transform: rotate(-45deg);
+        }
+
+        .status-icon.correct {
+            background-color: #4CAF50;
+        }
+
+        .status-icon.incorrect {
+            background-color: #F44336;
+        }
+
+        .status-correct {
+            color: #4CAF50;
+        }
+
+        .status-incorrect {
+            color: #F44336;
+        }
+
+        .card-back.correct {
+            background: #f0f8f0;
+            border: 2px solid #4CAF50;
+        }
+
+        .card-back.incorrect {
+            background: #fdf2f2;
+            border: 2px solid #F44336;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #69b244;
+            width: 0%;
+            transition: width 0.5s ease;
+            border-radius: 4px;
+        }
+
+        .completion-message {
+            text-align: center;
+            padding: 20px 15px;
+            background: #f0f8f0;
+            border-radius: 10px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .completion-message h3 {
+            color: #69b244;
+            margin-bottom: 10px;
+        }
+
+        .reset-button {
+            background: #004393;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            margin-top: 15px;
+            transition: background 0.3s ease;
+        }
+
+        .reset-button:hover {
+            background: #003366;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 10px 5px;
+            }
+            
+            .game-section {
+                padding: 20px 15px;
+            }
+            
+            .question-container {
+                padding: 15px 10px;
+            }
+            
+            .cards-container {
+                grid-template-columns: 1fr;
+                gap: 25px;
+            }
+            
+            .flashcard {
+                height: 220px;
+            }
+            
+            .card-front, .card-back {
+                padding: 15px 10px;
+            }
+        }
+
+        @media (max-width: 1024px) and (min-width: 769px) {
+            .cards-container {
+                gap: 30px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+
+        <!-- Interactive Game Section -->
+        <div class="game-section">
+            <h2 class="game-title">Food for Thought</h2>
+            
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+
+            <!-- Question 1: Raw Salad Mix -->
+            <div class="question-container">
+                <h3 class="question-title">Question 1: Raw Salad Mix</h3>
+                <p class="question-text">Which of the following food safety hazards do you consider to be the MOST IMPORTANT for the raw salad mix?</p>
+                
+                <div class="cards-container">
+                    <div class="flashcard" onclick="flipCard(this, 'incorrect')">
+                        <div class="card-inner">
+                            <div class="card-front">Mould</div>
+                            <div class="card-back incorrect">
+                                <div class="status-indicator status-incorrect">
+                                    <span class="status-icon incorrect"></span>
+                                    Try Again
+                                </div>
+                                Microbiology is indeed important, but it is less so for this type of plant, and washing and sorting usually solve this problem.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flashcard" onclick="flipCard(this, 'incorrect')">
+                        <div class="card-inner">
+                            <div class="card-front">Snail</div>
+                            <div class="card-back incorrect">
+                                <div class="status-indicator status-incorrect">
+                                    <span class="status-icon incorrect"></span>
+                                    Try Again
+                                </div>
+                                Although indeed a common foreign body, it is usually easily removed by processing technologies, and the risk is not as high.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flashcard" onclick="flipCard(this, 'correct')">
+                        <div class="card-inner">
+                            <div class="card-front">Heavy Metal</div>
+                            <div class="card-back correct">
+                                <div class="status-indicator status-correct">
+                                    <span class="status-icon correct"></span>
+                                    Correct!
+                                </div>
+                                Good answer! Most problems with field-grown vegetables are often caused by environmental pollutants (air pollution).
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Question 2: Fried Chicken Fillet -->
+            <div class="question-container">
+                <h3 class="question-title">Question 2: Fried Chicken Fillet</h3>
+                <p class="question-text">Which of the following food safety hazards do you consider to be the MOST IMPORTANT for the fried chicken?</p>
+                
+                <div class="cards-container">
+                    <div class="flashcard" onclick="flipCard(this, 'correct')">
+                        <div class="card-inner">
+                            <div class="card-front">Salmonella</div>
+                            <div class="card-back correct">
+                                <div class="status-indicator status-correct">
+                                    <span class="status-icon correct"></span>
+                                    Correct!
+                                </div>
+                                Significant food safety risk due to inappropriate technology (poor heat treatment).
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flashcard" onclick="flipCard(this, 'incorrect')">
+                        <div class="card-inner">
+                            <div class="card-front">Feathers</div>
+                            <div class="card-back incorrect">
+                                <div class="status-indicator status-incorrect">
+                                    <span class="status-icon incorrect"></span>
+                                    Try Again
+                                </div>
+                                Very low risk, no or difficult to reach the consumer.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flashcard" onclick="flipCard(this, 'incorrect')">
+                        <div class="card-inner">
+                            <div class="card-front">Pesticide</div>
+                            <div class="card-back incorrect">
+                                <div class="status-indicator status-incorrect">
+                                    <span class="status-icon incorrect"></span>
+                                    Try Again
+                                </div>
+                                It could only come from feed; the risk is generally low.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Question 3: Cheese Pieces -->
+            <div class="question-container">
+                <h3 class="question-title">Question 3: Cheese Pieces (Chilled, vacuum packed)</h3>
+                <p class="question-text">Which of the following food safety hazards do you consider to be the MOST IMPORTANT for the cheese pieces?</p>
+                
+                <div class="cards-container">
+                    <div class="flashcard" onclick="flipCard(this, 'incorrect')">
+                        <div class="card-inner">
+                            <div class="card-front">Foil Pieces</div>
+                            <div class="card-back incorrect">
+                                <div class="status-indicator status-incorrect">
+                                    <span class="status-icon incorrect"></span>
+                                    Try Again
+                                </div>
+                                A potential hazard, but not a direct food safety risk.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flashcard" onclick="flipCard(this, 'correct')">
+                        <div class="card-inner">
+                            <div class="card-front">Mould</div>
+                            <div class="card-back correct">
+                                <div class="status-indicator status-correct">
+                                    <span class="status-icon correct"></span>
+                                    Correct!
+                                </div>
+                                Good answer! Microbiological hazards associated with improper handling during cheese production.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flashcard" onclick="flipCard(this, 'incorrect')">
+                        <div class="card-inner">
+                            <div class="card-front">Not Appropriate Colour</div>
+                            <div class="card-back incorrect">
+                                <div class="status-indicator status-incorrect">
+                                    <span class="status-icon incorrect"></span>
+                                    Try Again
+                                </div>
+                                Sensory deviation, not a food safety hazard. Probably due to production technology or inappropriate storage.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Question 4: Salad Dressing -->
+            <div class="question-container">
+                <h3 class="question-title">Question 4: Salad Dressing (Oil, water, vinegar, mustard, spices – liquid in foil sacks)</h3>
+                <p class="question-text">Which of the following food safety hazards do you consider to be the MOST IMPORTANT for the salad dressing?</p>
+                
+                <div class="cards-container">
+                    <div class="flashcard" onclick="flipCard(this, 'correct')">
+                        <div class="card-inner">
+                            <div class="card-front">Microbiological</div>
+                            <div class="card-back correct">
+                                <div class="status-indicator status-correct">
+                                    <span class="status-icon correct"></span>
+                                    Correct!
+                                </div>
+                                Indeed, in refrigerated conditions and acidic environments, microbial growth may occur, which, together with the risky finished product, may pose a risk.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flashcard" onclick="flipCard(this, 'incorrect')">
+                        <div class="card-inner">
+                            <div class="card-front">Sour Off Flavour</div>
+                            <div class="card-back incorrect">
+                                <div class="status-indicator status-incorrect">
+                                    <span class="status-icon incorrect"></span>
+                                    Try Again
+                                </div>
+                                Not a direct food safety risk, but a consequence caused by many factors.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flashcard" onclick="flipCard(this, 'incorrect')">
+                        <div class="card-inner">
+                            <div class="card-front">Metal Flake</div>
+                            <div class="card-back incorrect">
+                                <div class="status-indicator status-incorrect">
+                                    <span class="status-icon incorrect"></span>
+                                    Try Again
+                                </div>
+                                It is a real risk, but liquids are usually filtered during packaging, so the risk is low.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Question 5: Croutons -->
+            <div class="question-container">
+                <h3 class="question-title">Question 5: Croutons (toasted bread cubes (10X10 mm) in 1kg foil sacks)</h3>
+                <p class="question-text">Which of the following food safety hazards do you consider to be the MOST IMPORTANT for the Croutons?</p>
+                
+                <div class="cards-container">
+                    <div class="flashcard" onclick="flipCard(this, 'incorrect')">
+                        <div class="card-inner">
+                            <div class="card-front">Stone</div>
+                            <div class="card-back incorrect">
+                                <div class="status-indicator status-incorrect">
+                                    <span class="status-icon incorrect"></span>
+                                    Try Again
+                                </div>
+                                As a result of the size of the croutons (10x10mm), even if it does get in, there is no real risk.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flashcard" onclick="flipCard(this, 'correct')">
+                        <div class="card-inner">
+                            <div class="card-front">Carcinogenic Substances</div>
+                            <div class="card-back correct">
+                                <div class="status-indicator status-correct">
+                                    <span class="status-icon correct"></span>
+                                    Correct!
+                                </div>
+                                Toasting bread can produce carcinogenic substances (acrylamide) if the technology is not right.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flashcard" onclick="flipCard(this, 'incorrect')">
+                        <div class="card-inner">
+                            <div class="card-front">Salmonella</div>
+                            <div class="card-back incorrect">
+                                <div class="status-indicator status-incorrect">
+                                    <span class="status-icon incorrect"></span>
+                                    Try Again
+                                </div>
+                                Hazard not specific to the product.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="completion-message" id="completionMessage">
+                <h3>🎉 Congratulations!</h3>
+                <p>You have successfully completed the EITRET Salad Mix case study. You've learned about the primary hazards for each ingredient and how to prioritize food safety risks in multi-component products.</p>
+                <button class="reset-button" onclick="resetGame()">Start Over</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let flippedCards = 0;
+        const totalCards = 15; // 5 questions × 3 cards each
+
+        function flipCard(card, type) {
+            if (card.classList.contains('flipped')) return;
+            
+            card.classList.add('flipped');
+            flippedCards++;
+            
+            // Update progress bar
+            const progress = (flippedCards / totalCards) * 100;
+            document.getElementById('progressFill').style.width = progress + '%';
+            
+            // Show completion message when all cards are flipped
+            if (flippedCards === totalCards) {
+                setTimeout(() => {
+                    document.getElementById('completionMessage').style.display = 'block';
+                    document.getElementById('completionMessage').scrollIntoView({ behavior: 'smooth' });
+                }, 1000);
+            }
+        }
+
+        function resetGame() {
+            // Reset all cards
+            const cards = document.querySelectorAll('.flashcard');
+            cards.forEach(card => {
+                card.classList.remove('flipped');
+            });
+            
+            // Reset progress
+            flippedCards = 0;
+            document.getElementById('progressFill').style.width = '0%';
+            
+            // Hide completion message
+            document.getElementById('completionMessage').style.display = 'none';
+            
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'97553d39176feeb3',t:'MTc1NjIzMTMzNi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
